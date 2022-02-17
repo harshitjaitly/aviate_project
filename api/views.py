@@ -17,7 +17,7 @@ class ProfileCreate(APIView) :
 
 class ProfileList(APIView):
     """
-    List all Profiles, or create a new profile.
+    List all Profiles, or create a new profile
     """
     def get(self, request, format=None):
         profiles = Profile.objects.all()

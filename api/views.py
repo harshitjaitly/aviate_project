@@ -7,18 +7,24 @@ from rest_framework import status
 
 
 class ProfileCreate(APIView) :
-
+    """
+    Create a Profile with Required Entries of Name, Age & Contact
+    """
     def post(self, request, format=None):
+
+        if(request.data.get("resume")) :
+            return Response({"Error" : "Upload Resume at a later stage!"}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = ProfileSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            print(serializer.data['resume'])
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response({"Message" : "Success! Profile Created"}, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ProfileList(APIView):
     """
-    List all Profiles, or create a new profile
+    List all Profiles registered in the database
     """
     def get(self, request, format=None):
         profiles = Profile.objects.all()
@@ -28,7 +34,7 @@ class ProfileList(APIView):
 
 class ProfileDetails(APIView):
     """
-    Retrieve, update or delete a snippet instance.gfd
+    RUD operations for singular profile in the database
     """
     def get_object(self, pk):
         try:
@@ -53,6 +59,10 @@ class ProfileDetails(APIView):
         profile = self.get_object(pk)
         serializer = ProfileSerializer(profile, data=request.data, partial=True)
         if serializer.is_valid():
+
+            profile.resume_list['old_resume_'+str(profile.count)] = str(profile.resume)
+            profile.count = profile.count + 1
+
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -22,15 +22,13 @@ class Profile(ParanoidModel) :
     count = models.IntegerField(editable=False, default=0)
 
 
-    resume = models.FileField(upload_to=path_and_rename, max_length=255, null=True, blank=True)
+    resume = models.FileField(upload_to=path_and_rename, max_length=255, null=True, blank=True, default=None)
     resume_list = models.JSONField(editable=False, default=dict)
 
 
     def save(self, *args, **kwargs):
-
-
         super(Profile, self).save(*args, **kwargs)
-        
+
 
     def __str__(self) :
         return self.name

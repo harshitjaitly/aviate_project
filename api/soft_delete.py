@@ -29,7 +29,7 @@ class ParanoidModel(models.Model):
     class Meta:
         abstract = True
 
-    deleted_on = models.DateTimeField(null=True, blank=True)
+    deleted_on = models.DateTimeField(editable=False,null=True, blank=True)
     objects = ParanoidManager()
     original_objects = models.Manager()
 

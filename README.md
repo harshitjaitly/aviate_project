@@ -1,6 +1,8 @@
 # Aviate Assignment
 
-A RESTful API service using Django REST Framework as Backend with Postgres Database and Python=3.7.
+A RESTful API service using Django REST Framework as Backend
+Database Used : PostgreSQL
+
 This service has enpoints for :
 
 * Creating a Profile

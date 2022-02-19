@@ -18,7 +18,7 @@ class ParanoidQuerySet(QuerySet):
 
 class ParanoidManager(models.Manager):
     """
-    Only exposes objects that have NOT been soft-deleted.
+    A Manager which exposes Profile objects that have NOT been soft-deleted.
     """
 
     def get_queryset(self):

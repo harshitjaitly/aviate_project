@@ -9,7 +9,10 @@ from rest_framework import status
 
 class ProfileCreate(APIView) :
     """
-    Create a Profile with Required Entries of Name, Age & Contact
+    Create a Profile with Required Entries of Name, Password, Age & Contact
+    Request is NOT allowed to ADD resume or id fields
+
+    ACCESS_URL : "/create/" , Request Type : GET
     """
     def post(self, request, format=None):
 
@@ -22,13 +25,18 @@ class ProfileCreate(APIView) :
         serializer = ProfileSerializer(data=request.data)
 
         if serializer.is_valid():
-
             serializer.save()
             return Response({"Message" : "Success! Profile Created" , "ID" : serializer.data["id"]} , status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def validity_check(request):
+    """
+    Validity Check function used for UPDATE (PUT,PATCH) requests
+    Validates whether ID and Password fields are passed in the REQUEST
+    Performs Profile Exist Check,
+    If Exists, performs Correct Password Check
+    """
 
     if(not request.data.get("id")) :
         return Response({"Error" : "Enter Profile ID to make changes"}, status=status.HTTP_400_BAD_REQUEST)
@@ -48,16 +56,29 @@ def validity_check(request):
 
 class ProfileOperations(APIView):
     """
-    R U D operations for singular profile in the database
-    Profiles accessed using primary key = id
+    UPDATE & DELETE operations for a Profile
+    Profiles accessed using primary key = id (passed as parameter through url)
+
+    Only the primary Profile Details(except RESUME) can be UPDATED via this endpoint
+    Validation Check to avoid Update/Delete on RESUME field
+    Separate Endpoint for RESUME Operations
+
+    Reuired Fields : id , password
+    Validation Check for Profile Exists, ID, Password performed
+
+    SOFT_DELETE operation implemented
+    Soft Delete is that it's not permanently deleted it is only marked deleted
+    so it is not shown to any user including admin.
+
+    ACCESS_URLs :
+    Update a Profile : "/profile_ops/" , Request Type : PUT, PATCH
+    Delete a Profile : "/profile_ops/" , Request Type : DELETE
     """
 
     def put(self, request,format=None):
 
         if(request.data.get("resume")) :
             return Response({"Error" : "Use /resume_ops/ to update resume"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # profile = self.get_object(request.data.get("id"))
 
         invalid_response = validity_check(request)
         if(invalid_response) :
@@ -84,6 +105,24 @@ class ProfileOperations(APIView):
         return Response({"Message" : "Profile Successfully Deleted!"} , status=status.HTTP_204_NO_CONTENT)
 
 
+"""
+UPLOAD & UPDATE operations for a Profile's Resume
+
+Only the RESUME field of a Profile can be UPDATED via this endpoint
+Separate Endpoint to UPDATE Profile Details
+
+Reuired Fields : id , password
+Validation Check for Profile Exists, ID, Password
+Validation Check whether RESUME is passed in REQUEST for UPLOAD
+
+If a RESUME already exists for a Profile, then it is pushed into OLD RESUMEs,
+Uploaded RESUME marked as CURRENT Resume
+
+Uploaded Resumes Storage Directory : "/media/"
+
+ACCESS_URLs : "/upload_resume/" , Request Type : PUT, PATCH
+"""
+
 @api_view(["PUT", "PATCH"])
 def UploadResume(request) :
 
@@ -109,6 +148,15 @@ def UploadResume(request) :
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+"""
+VIEW operation for a Profile's Current Resume
+
+Validation CHECK whether a RESUME has been uploaded for the Profile or Not
+Profile Exists Validation as well
+
+ACCESS_URLs : "view_current_resume/<profile_id>/" , Request Type : GET
+"""
 @api_view(["GET"])
 def ViewCurrentResume(request, pk) :
 
@@ -129,6 +177,15 @@ def ViewCurrentResume(request, pk) :
         except Profile.DoesNotExist:
             raise Http404
 
+
+"""
+VIEW operation for a Profile's Old Resumes
+
+Validation CHECK whether OLD RESUMEs exist!
+Profile Exists Validation as well
+
+ACCESS_URLs : "view_old_resume/<profile_id>/" , Request Type : GET
+"""
 @api_view(["GET"])
 def ViewOldResume(request, pk) :
 
@@ -150,6 +207,13 @@ def ViewOldResume(request, pk) :
         except Profile.DoesNotExist:
             raise Http404
 
+
+"""
+VIEW operation for a Profile's Details
+Profile Exists Validation
+
+ACCESS_URLs : "/view_profile/<profile_id>/" , Request Type : GET
+"""
 @api_view(["GET"])
 def ViewProfile(request, pk) :
 
@@ -162,6 +226,12 @@ def ViewProfile(request, pk) :
         except Profile.DoesNotExist:
             raise Http404
 
+"""
+A Super VIEW operation for a complete DATABASE Overview
+Displays ALL the Profiles with ALL of their fields
+
+ACCESS_URLs : "/super_view/" , Request Type : GET
+"""
 @api_view(["GET"])
 def SuperList(request) :
 
@@ -170,6 +240,14 @@ def SuperList(request) :
         serializer = SuperSerializer(profiles, many=True)
         return Response(serializer.data)
 
+
+"""
+A VIEW operation for viewing DELETED Profiles
+Note : Profiles are not HARD_DELETED, just MARKED Deleted
+Displays ALL the Deleted Profiles with ALL of their fields
+
+ACCESS_URLs : "/view_deleted/" , Request Type : GET
+"""
 @api_view(["GET"])
 def ViewDeletedProfiles(request) :
 

@@ -24,7 +24,6 @@ class ResumeSerializer(serializers.ModelSerializer) :
         model = Profile
         fields = [
             "id",
-            "name",
             "resume",
             "prev_resume_list"
                 ]

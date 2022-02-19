@@ -1,7 +1,8 @@
 # Aviate Assignment
 
-## A RESTful API service using Django REST Framework as Backend
-## Database Used : PostgreSQL
+RESTful API service using Django REST Framework as Backend
+>
+Database Used : PostgreSQL
 
 This service has enpoints for :
 

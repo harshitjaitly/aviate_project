@@ -12,8 +12,10 @@ class ProfileSerializer(serializers.ModelSerializer) :
             "age",
             "contact",
             "resume",
+            "password"
                 ]
 
+        extra_kwargs = {'password': {'write_only': True}}
 
 class ResumeSerializer(serializers.ModelSerializer) :
 
@@ -22,6 +24,7 @@ class ResumeSerializer(serializers.ModelSerializer) :
         model = Profile
         fields = [
             "id",
+            "name",
             "resume",
             "prev_resume_list"
                 ]

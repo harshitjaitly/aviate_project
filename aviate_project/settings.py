@@ -81,7 +81,7 @@ DATABASES = {
         # 'NAME': BASE_DIR / 'db.sqlite3',
 
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'aviate',
+        'NAME': 'aviate_database',
         'USER': 'postgres',
         'PASSWORD': 'admin',
         'HOST': 'localhost',

@@ -1,6 +1,7 @@
 from .models import Profile
 from .serializers import ProfileSerializer, ResumeSerializer, SuperSerializer
 from django.http import Http404
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
@@ -15,11 +16,34 @@ class ProfileCreate(APIView) :
         if(request.data.get("resume")) :
             return Response({"Error" : "Upload Resume after creating Profile!"}, status=status.HTTP_400_BAD_REQUEST)
 
+        if(request.data.get("id")) :
+            return Response({"Error" : "ID will be automatically generated!"}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = ProfileSerializer(data=request.data)
+
         if serializer.is_valid():
+
             serializer.save()
-            return Response({"Message" : "Success! Profile Created"}, status=status.HTTP_201_CREATED)
+            return Response({"Message" : "Success! Profile Created" , "ID" : serializer.data["id"]} , status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def validity_check(request):
+
+    if(not request.data.get("id")) :
+        return Response({"Error" : "Enter Profile ID to make changes"}, status=status.HTTP_400_BAD_REQUEST)
+    if(not request.data.get("password")) :
+        return Response({"Error" : "Enter Password to make changes"}, status=status.HTTP_400_BAD_REQUEST)
+
+    id = request.data.get("id")
+    try:
+        profile = Profile.objects.get(pk=id)
+    except Profile.DoesNotExist:
+        raise Http404
+
+    if(request.data.get("password") != profile.password) :
+        return Response({"Error" : "Incorrect Password"}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class ProfileOperations(APIView):
@@ -27,23 +51,19 @@ class ProfileOperations(APIView):
     R U D operations for singular profile in the database
     Profiles accessed using primary key = id
     """
-    def get_object(self, pk):
-        try:
-            return Profile.objects.get(pk=pk)
-        except Profile.DoesNotExist:
-            raise Http404
 
-    def get(self, request, pk, format=None):
-        profile = self.get_object(pk)
-        serializer = ProfileSerializer(profile)
-        return Response(serializer.data)
-
-    def put(self, request, pk, format=None):
+    def put(self, request,format=None):
 
         if(request.data.get("resume")) :
-            return Response({"Error" : "Use /resume_ops/<pk>/ to update resume"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"Error" : "Use /resume_ops/ to update resume"}, status=status.HTTP_400_BAD_REQUEST)
 
-        profile = self.get_object(pk)
+        # profile = self.get_object(request.data.get("id"))
+
+        invalid_response = validity_check(request)
+        if(invalid_response) :
+            return invalid_response
+
+        profile = Profile.objects.get(pk = request.data.get("id"))
         serializer = ProfileSerializer(profile, data=request.data, partial=True)
 
         if serializer.is_valid():
@@ -52,35 +72,31 @@ class ProfileOperations(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-    def delete(self, request, pk, format=None):
-        profile = self.get_object(pk)
+    def delete(self, request,format=None):
+
+        invalid_response = validity_check(request)
+        if(invalid_response) :
+            return invalid_response
+
+        profile = Profile.objects.get(pk = request.data.get("id"))
         profile.delete()
+
         return Response({"Message" : "Profile Successfully Deleted!"} , status=status.HTTP_204_NO_CONTENT)
 
 
-class ResumeOperations(APIView) :
+@api_view(["PUT", "PATCH"])
+def UploadResume(request) :
 
-    def get_object(self, pk):
-        try:
-            return Profile.objects.get(pk=pk)
-        except Profile.DoesNotExist:
-            raise Http404
-
-    def get(self, request, pk, format=None):
-        profile = self.get_object(pk)
-
-        if(not profile.resume) :
-            return Response({"Message" : "No Resume Uploaded Yet!"} , status=status.HTTP_204_NO_CONTENT)
-
-        serializer = ResumeSerializer(profile)
-        return Response(serializer.data)
-
-    def put(self, request, pk, format=None) :
+    if(request.method == "PUT" or request.method == "PATCH") :
 
         if(not request.data.get("resume")) :
             return Response({"Error" : "Please select resume to upload"}, status=status.HTTP_204_NO_CONTENT)
+        invalid_response = validity_check(request)
 
-        profile = self.get_object(pk)
+        if(invalid_response) :
+            return invalid_response
+
+        profile = Profile.objects.get(pk = request.data.get("id"))
 
         if(profile.resume) :
             profile.prev_resume_list['old_resume_'+str(profile.count)] = str(profile.resume)
@@ -93,19 +109,129 @@ class ResumeOperations(APIView) :
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(["GET"])
+def ViewCurrentResume(request, pk) :
 
-class SuperList(APIView):
-    """
-    List all Profiles registered in the database
-    """
-    def get(self, request, format=None):
+    if(request.method == "GET") :
+        try:
+            profile = Profile.objects.get(pk=pk)
+
+            if(not profile.resume) :
+                return Response({"Message" : "No Resume Uploaded Yet!"} , status=status.HTTP_204_NO_CONTENT)
+
+            serializer = ProfileSerializer(profile)
+            return Response({
+                        "ID" : serializer.data['id'],
+                        "Name" : serializer.data['name'],
+                        "Current Resume" : serializer.data['resume'],
+            })
+
+        except Profile.DoesNotExist:
+            raise Http404
+
+@api_view(["GET"])
+def ViewOldResume(request, pk) :
+
+    if(request.method == "GET") :
+        try:
+            profile = Profile.objects.get(pk=pk)
+
+            if(not profile.prev_resume_list) :
+                return Response({"Message" : "No Previous Resumes Found!"} , status=status.HTTP_204_NO_CONTENT)
+
+            serializer = ResumeSerializer(profile)
+            print(serializer)
+            return Response({
+                        "ID" : serializer.data['id'],
+                        "Name" : serializer.data['name'],
+                        "Previous Resumes" : serializer.data['prev_resume_list'],
+            })
+
+        except Profile.DoesNotExist:
+            raise Http404
+
+@api_view(["GET"])
+def ViewProfile(request, pk) :
+
+    if(request.method == "GET") :
+        try:
+            profile = Profile.objects.get(pk=pk)
+            serializer = ProfileSerializer(profile)
+            return Response(serializer.data)
+
+        except Profile.DoesNotExist:
+            raise Http404
+
+@api_view(["GET"])
+def SuperList(request) :
+
+    if(request.method == "GET") :
         profiles = Profile.objects.all()
         serializer = SuperSerializer(profiles, many=True)
         return Response(serializer.data)
 
-class ViewDeletedProfiles(APIView) :
+@api_view(["GET"])
+def ViewDeletedProfiles(request) :
 
-    def get(self, request, format=None):
+    if(request.method == "GET") :
         profiles = Profile.original_objects.all().filter(deleted_on__isnull=False)
         serializer = ProfileSerializer(profiles, many=True)
         return Response(serializer.data)
+
+# class ResumeOperations(APIView) :
+
+    # def get_object(self, pk):
+    #     try:
+    #         return Profile.objects.get(pk=pk)
+    #     except Profile.DoesNotExist:
+    #         raise Http404
+
+    # def get(self, request, pk, format=None):
+    #     profile = self.get_object(pk)
+    #
+    #     if(not profile.resume) :
+    #         return Response({"Message" : "No Resume Uploaded Yet!"} , status=status.HTTP_204_NO_CONTENT)
+    #
+    #     serializer = ResumeSerializer(profile)
+    #     return Response(serializer.data)
+
+    # def put(self, request, pk, format=None) :
+    #
+    #     if(not request.data.get("resume")) :
+    #         return Response({"Error" : "Please select resume to upload"}, status=status.HTTP_204_NO_CONTENT)
+    #
+    #     profile = self.get_object(pk)
+    #
+    #     invalid_response = validity_check(request, profile)
+    #     if(invalid_response) :
+    #         return invalid_response
+    #
+    #     if(profile.resume) :
+    #         profile.prev_resume_list['old_resume_'+str(profile.count)] = str(profile.resume)
+    #         profile.count = profile.count + 1
+    #
+    #     serializer = ResumeSerializer(profile, data=request.data, partial=True)
+    #     if serializer.is_valid():
+    #         serializer.save()
+    #         return Response({"Message" : "Success! Resume Uploaded"}, status=status.HTTP_201_CREATED)
+    #
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# class SuperList(APIView):
+#     """
+#     List all Profiles registered in the database
+#     """
+#     def get(self, request, format=None):
+#         profiles = Profile.objects.all()
+#         serializer = SuperSerializer(profiles, many=True)
+#         return Response(serializer.data)
+
+
+
+# class ViewDeletedProfiles(APIView) :
+#
+#     def get(self, request, format=None):
+#         profiles = Profile.original_objects.all().filter(deleted_on__isnull=False)
+#         serializer = ProfileSerializer(profiles, many=True)
+#         return Response(serializer.data)

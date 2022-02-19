@@ -6,14 +6,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 
+"""
+Create a Profile with Required Entries of Name, Password, Age & Contact
+Request is NOT allowed to ADD resume or id fields
 
+ACCESS_URL : "/create/" , Request Type : GET
+"""
 class ProfileCreate(APIView) :
-    """
-    Create a Profile with Required Entries of Name, Password, Age & Contact
-    Request is NOT allowed to ADD resume or id fields
 
-    ACCESS_URL : "/create/" , Request Type : GET
-    """
     def post(self, request, format=None):
 
         if(request.data.get("resume")) :
@@ -30,13 +30,14 @@ class ProfileCreate(APIView) :
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+"""
+Validity Check function used for UPDATE (PUT,PATCH) requests
+Validates whether ID and Password fields are passed in the REQUEST
+Performs Profile Exist Check,
+If Exists, performs Correct Password Check
+"""
 def validity_check(request):
-    """
-    Validity Check function used for UPDATE (PUT,PATCH) requests
-    Validates whether ID and Password fields are passed in the REQUEST
-    Performs Profile Exist Check,
-    If Exists, performs Correct Password Check
-    """
 
     if(not request.data.get("id")) :
         return Response({"Error" : "Enter Profile ID to make changes"}, status=status.HTTP_400_BAD_REQUEST)
@@ -53,28 +54,26 @@ def validity_check(request):
         return Response({"Error" : "Incorrect Password"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+"""
+UPDATE & DELETE operations for a Profile
+Profiles accessed using primary key = id (passed as parameter through url)
 
+Only the primary Profile Details(except RESUME) can be UPDATED via this endpoint
+Validation Check to avoid Update/Delete on RESUME field
+Separate Endpoint for RESUME Operations
+
+Reuired Fields : id , password
+Validation Check for Profile Exists, ID, Password performed
+
+SOFT_DELETE operation implemented
+Soft Delete is that it's not permanently deleted it is only marked deleted
+so it is not shown to any user including admin.
+
+ACCESS_URLs :
+Update a Profile : "/profile_ops/" , Request Type : PUT, PATCH
+Delete a Profile : "/profile_ops/" , Request Type : DELETE
+"""
 class ProfileOperations(APIView):
-    """
-    UPDATE & DELETE operations for a Profile
-    Profiles accessed using primary key = id (passed as parameter through url)
-
-    Only the primary Profile Details(except RESUME) can be UPDATED via this endpoint
-    Validation Check to avoid Update/Delete on RESUME field
-    Separate Endpoint for RESUME Operations
-
-    Reuired Fields : id , password
-    Validation Check for Profile Exists, ID, Password performed
-
-    SOFT_DELETE operation implemented
-    Soft Delete is that it's not permanently deleted it is only marked deleted
-    so it is not shown to any user including admin.
-
-    ACCESS_URLs :
-    Update a Profile : "/profile_ops/" , Request Type : PUT, PATCH
-    Delete a Profile : "/profile_ops/" , Request Type : DELETE
-    """
-
     def put(self, request,format=None):
 
         if(request.data.get("resume")) :
@@ -105,6 +104,7 @@ class ProfileOperations(APIView):
         return Response({"Message" : "Profile Successfully Deleted!"} , status=status.HTTP_204_NO_CONTENT)
 
 
+
 """
 UPLOAD & UPDATE operations for a Profile's Resume
 
@@ -122,7 +122,6 @@ Uploaded Resumes Storage Directory : "/media/"
 
 ACCESS_URLs : "/upload_resume/" , Request Type : PUT, PATCH
 """
-
 @api_view(["PUT", "PATCH"])
 def UploadResume(request) :
 
@@ -255,61 +254,3 @@ def ViewDeletedProfiles(request) :
         profiles = Profile.original_objects.all().filter(deleted_on__isnull=False)
         serializer = ProfileSerializer(profiles, many=True)
         return Response(serializer.data)
-
-# class ResumeOperations(APIView) :
-
-    # def get_object(self, pk):
-    #     try:
-    #         return Profile.objects.get(pk=pk)
-    #     except Profile.DoesNotExist:
-    #         raise Http404
-
-    # def get(self, request, pk, format=None):
-    #     profile = self.get_object(pk)
-    #
-    #     if(not profile.resume) :
-    #         return Response({"Message" : "No Resume Uploaded Yet!"} , status=status.HTTP_204_NO_CONTENT)
-    #
-    #     serializer = ResumeSerializer(profile)
-    #     return Response(serializer.data)
-
-    # def put(self, request, pk, format=None) :
-    #
-    #     if(not request.data.get("resume")) :
-    #         return Response({"Error" : "Please select resume to upload"}, status=status.HTTP_204_NO_CONTENT)
-    #
-    #     profile = self.get_object(pk)
-    #
-    #     invalid_response = validity_check(request, profile)
-    #     if(invalid_response) :
-    #         return invalid_response
-    #
-    #     if(profile.resume) :
-    #         profile.prev_resume_list['old_resume_'+str(profile.count)] = str(profile.resume)
-    #         profile.count = profile.count + 1
-    #
-    #     serializer = ResumeSerializer(profile, data=request.data, partial=True)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response({"Message" : "Success! Resume Uploaded"}, status=status.HTTP_201_CREATED)
-    #
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# class SuperList(APIView):
-#     """
-#     List all Profiles registered in the database
-#     """
-#     def get(self, request, format=None):
-#         profiles = Profile.objects.all()
-#         serializer = SuperSerializer(profiles, many=True)
-#         return Response(serializer.data)
-
-
-
-# class ViewDeletedProfiles(APIView) :
-#
-#     def get(self, request, format=None):
-#         profiles = Profile.original_objects.all().filter(deleted_on__isnull=False)
-#         serializer = ProfileSerializer(profiles, many=True)
-#         return Response(serializer.data)

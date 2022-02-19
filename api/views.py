@@ -8,7 +8,7 @@ from rest_framework import status
 
 """
 Create a Profile with Required Entries of Name, Password, Age & Contact
-Request is NOT allowed to ADD resume or id fields
+Request is NOT allowed to ADD resume as there's a separate endpoint
 
 ACCESS_URL : "/create/" , Request Type : GET
 """
@@ -56,7 +56,7 @@ def validity_check(request):
 
 """
 UPDATE & DELETE operations for a Profile
-Profiles accessed using primary key = id (passed as parameter through url)
+Profiles accessed using primary key = id (passed as a request field)
 
 Only the primary Profile Details(except RESUME) can be UPDATED via this endpoint
 Validation Check to avoid Update/Delete on RESUME field
@@ -103,6 +103,25 @@ class ProfileOperations(APIView):
 
         return Response({"Message" : "Profile Successfully Deleted!"} , status=status.HTTP_204_NO_CONTENT)
 
+
+
+"""
+VIEW operation for a Profile's Details
+Profile Exists Validation
+
+ACCESS_URLs : "/view_profile/<profile_id>/" , Request Type : GET
+"""
+@api_view(["GET"])
+def ViewProfile(request, pk) :
+
+    if(request.method == "GET") :
+        try:
+            profile = Profile.objects.get(pk=pk)
+            serializer = ProfileSerializer(profile)
+            return Response(serializer.data)
+
+        except Profile.DoesNotExist:
+            raise Http404
 
 
 """
@@ -207,23 +226,7 @@ def ViewOldResume(request, pk) :
             raise Http404
 
 
-"""
-VIEW operation for a Profile's Details
-Profile Exists Validation
 
-ACCESS_URLs : "/view_profile/<profile_id>/" , Request Type : GET
-"""
-@api_view(["GET"])
-def ViewProfile(request, pk) :
-
-    if(request.method == "GET") :
-        try:
-            profile = Profile.objects.get(pk=pk)
-            serializer = ProfileSerializer(profile)
-            return Response(serializer.data)
-
-        except Profile.DoesNotExist:
-            raise Http404
 
 """
 A Super VIEW operation for a complete DATABASE Overview

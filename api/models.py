@@ -1,8 +1,9 @@
 from django.db import models
 from .soft_delete import ParanoidModel
-# Create your models here.
-
 import os
+
+
+# Create your models here.
 
 """
 Custom-Function which renames the uploaded Resume Files

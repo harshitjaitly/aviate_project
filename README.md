@@ -17,7 +17,7 @@ This service has enpoints for :
 * Viewing Deleted Profiles
 <hr/>
 
-## Profile Model Fields Description
+## Profile Instance Fields Description
 Each 'Profile' instance in the model has following fields :
 <br/>
 | Field | Description |

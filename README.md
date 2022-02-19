@@ -189,4 +189,5 @@ URL = http://localhost:8000/view_deleted/
 * VIEW operation for viewing DELETED Profiles
 * *__Profiles are not HARD_DELETED, just MARKED Deleted__*
 * Displays ALL the Deleted Profiles with ALL of their fields
+
 <hr/>

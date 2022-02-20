@@ -22,7 +22,7 @@ This service has endpoints for :
 <hr/>
 
 ## Profile Instance Fields Description
-Each 'Profile' instance in the model has following fields :
+Each 'Profile' instance has following fields :
 <br/>
 | Field | Description |
 | :--: | :-----------: |

@@ -1,5 +1,5 @@
 from django.db import models
-from .soft_delete import ParanoidModel
+from .soft_delete import CustomModel
 import os
 
 
@@ -23,7 +23,7 @@ Description Of Profile Model Field
 Required Fields : Name, Password, Age, Contact
 Non-Editable Fields : count (stores the count of resumes uploaded) , prev_resume_list (stores the directory address of OLD Resumes)
 """
-class Profile(ParanoidModel) :
+class Profile(CustomModel) :
 
     name = models.CharField(max_length=255)
     password = models.CharField(max_length=255, blank=False)

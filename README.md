@@ -1,4 +1,4 @@
-# Aviate Assignment
+# Aviate Intern Assignment
 
 RESTful API service using Django REST Framework as Backend
 >

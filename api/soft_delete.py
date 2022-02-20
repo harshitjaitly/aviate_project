@@ -4,7 +4,7 @@ from django.utils import timezone
 
 
 
-class ParanoidQuerySet(QuerySet):
+class CustomQuerySet(QuerySet):
     """
     Prevents objects from being hard-deleted. Instead, sets the
     ``date_deleted``, effectively soft-deleting the object.
@@ -16,21 +16,21 @@ class ParanoidQuerySet(QuerySet):
             obj.save()
 
 
-class ParanoidManager(models.Manager):
+class CustomManager(models.Manager):
     """
     A Manager which exposes Profile objects that have NOT been soft-deleted.
     """
 
     def get_queryset(self):
-        return ParanoidQuerySet(self.model, using=self._db).filter(
+        return CustomQuerySet(self.model, using=self._db).filter(
             deleted_on__isnull=True)
 
-class ParanoidModel(models.Model):
+class CustomModel(models.Model):
     class Meta:
         abstract = True
 
     deleted_on = models.DateTimeField(editable=False,null=True, blank=True)
-    objects = ParanoidManager()
+    objects = CustomManager()
     original_objects = models.Manager()
 
     def delete(self):

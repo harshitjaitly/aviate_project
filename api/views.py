@@ -7,6 +7,30 @@ from rest_framework.views import APIView
 from rest_framework import status
 
 """
+Validity Check function used for UPDATE (PUT,PATCH) requests
+Validates whether ID and Password fields are passed in the REQUEST
+Performs Profile Exist Check,
+If Exists, performs Correct Password Check
+"""
+def validity_check(request):
+
+    if(not request.data.get("id")) :
+        return Response({"Error" : "Enter Profile ID to make changes"}, status=status.HTTP_400_BAD_REQUEST)
+    if(not request.data.get("password")) :
+        return Response({"Error" : "Enter Password to make changes"}, status=status.HTTP_400_BAD_REQUEST)
+
+    id = request.data.get("id")
+    try:
+        profile = Profile.objects.get(pk=id)
+    except Profile.DoesNotExist:
+        raise Http404
+
+    if(request.data.get("password") != profile.password) :
+        return Response({"Error" : "Incorrect Password"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+"""
 Create a Profile with Required Entries of Name, Password, Age & Contact
 Request is NOT allowed to ADD resume as there's a separate endpoint
 
@@ -32,26 +56,24 @@ class ProfileCreate(APIView) :
 
 
 """
-Validity Check function used for UPDATE (PUT,PATCH) requests
-Validates whether ID and Password fields are passed in the REQUEST
-Performs Profile Exist Check,
-If Exists, performs Correct Password Check
+VIEW operation for a Profile's Details
+Profile Exists Validation
+
+ACCESS_URLs : "/view_profile/<profile_id>/" , Request Type : GET
 """
-def validity_check(request):
+@api_view(["GET"])
+def ViewProfile(request, pk) :
 
-    if(not request.data.get("id")) :
-        return Response({"Error" : "Enter Profile ID to make changes"}, status=status.HTTP_400_BAD_REQUEST)
-    if(not request.data.get("password")) :
-        return Response({"Error" : "Enter Password to make changes"}, status=status.HTTP_400_BAD_REQUEST)
+    if(request.method == "GET") :
+        try:
+            profile = Profile.objects.get(pk=pk)
+            serializer = ProfileSerializer(profile)
+            return Response(serializer.data)
 
-    id = request.data.get("id")
-    try:
-        profile = Profile.objects.get(pk=id)
-    except Profile.DoesNotExist:
-        raise Http404
+        except Profile.DoesNotExist:
+            raise Http404
 
-    if(request.data.get("password") != profile.password) :
-        return Response({"Error" : "Incorrect Password"}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 """
@@ -77,7 +99,7 @@ class ProfileOperations(APIView):
     def put(self, request,format=None):
 
         if(request.data.get("resume")) :
-            return Response({"Error" : "Use /resume_ops/ to update resume"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"Error" : "Use /upload_resume/ to update resume"}, status=status.HTTP_400_BAD_REQUEST)
 
         invalid_response = validity_check(request)
         if(invalid_response) :
@@ -105,23 +127,6 @@ class ProfileOperations(APIView):
 
 
 
-"""
-VIEW operation for a Profile's Details
-Profile Exists Validation
-
-ACCESS_URLs : "/view_profile/<profile_id>/" , Request Type : GET
-"""
-@api_view(["GET"])
-def ViewProfile(request, pk) :
-
-    if(request.method == "GET") :
-        try:
-            profile = Profile.objects.get(pk=pk)
-            serializer = ProfileSerializer(profile)
-            return Response(serializer.data)
-
-        except Profile.DoesNotExist:
-            raise Http404
 
 
 """
@@ -196,6 +201,7 @@ def ViewCurrentResume(request, pk) :
             raise Http404
 
 
+
 """
 VIEW operation for a Profile's Old Resumes
 
@@ -218,7 +224,6 @@ def ViewOldResume(request, pk) :
             print(serializer)
             return Response({
                         "ID" : serializer.data['id'],
-                        "Name" : serializer.data['name'],
                         "Previous Resumes" : serializer.data['prev_resume_list'],
             })
 
@@ -241,6 +246,7 @@ def SuperList(request) :
         profiles = Profile.objects.all()
         serializer = SuperSerializer(profiles, many=True)
         return Response(serializer.data)
+
 
 
 """

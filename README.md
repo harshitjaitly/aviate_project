@@ -1,10 +1,10 @@
 # Aviate Intern Assignment
 
-RESTful API service using Django REST Framework as Backend
+RESTful API service using Django REST Framework(DRF) as Backend
 >
 Database Used : PostgreSQL
 
-This service has enpoints for :
+This service has endpoints for :
 
 * Creating a Profile
 * Viewing a Profile
@@ -18,6 +18,7 @@ This service has enpoints for :
 >
 * Super View of Complete Data
 * Viewing Deleted Profiles
+>
 <hr/>
 
 ## Profile Instance Fields Description
@@ -91,7 +92,7 @@ URL = http://localhost:8000/profile_ops/
 
 * UPDATE operations for a Profile
 * Profiles accessed using primary key = id (passed as a request field)
-* Only the primary Profile Details(except RESUME) can be UPDATED via this endpoint
+* Only the PRIMARY Profile Details(except RESUME) can be UPDATED via this endpoint
 * Validation Check to avoid Update on RESUME field
 * Separate Endpoint for RESUME Operations
 * Validation Check for Profile Exists, ID, Password performed
